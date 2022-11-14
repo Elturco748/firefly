@@ -51,7 +51,7 @@ export function generateTransactionActivity(
     const tag = getTagFromOutput(output)
     const publicNote = ''
 
-    const sendingInfo = getSendingInformation(processedTransaction, output, account)
+    const sendingInfo = getSendingInformation(processedTransaction, output, account, isSelfTransaction)
     const asyncData = getAsyncDataFromOutput(output, transactionId, claimingData, account)
 
     return {
@@ -68,7 +68,6 @@ export function generateTransactionActivity(
         storageDeposit,
         giftedStorageDeposit,
         rawAmount,
-        isSelfTransaction,
         isShimmerClaiming,
         publicNote,
         metadata,

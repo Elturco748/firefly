@@ -42,6 +42,9 @@
         if (direction === ActivityDirection.Outgoing) {
             return isConfirmed ? 'general.sent' : 'general.sending'
         }
+        if (direction === ActivityDirection.Burning) {
+            return isConfirmed ? 'general.burn' : 'general.burning'
+        }
     }
 
     function getSubjectLocale(_activity: TransactionActivity): string {

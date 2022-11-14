@@ -1,7 +1,9 @@
 import { IAccountState } from '@core/account'
+import { OUTPUT_TYPE_TREASURY } from '@core/wallet/constants'
 import { ActivityDirection } from '@core/wallet/enums'
 import { IProcessedTransaction } from '@core/wallet/interfaces'
 import { Output, Subject } from '@core/wallet/types'
+import { IOutputResponse } from '@iota/types'
 import { getSubjectFromAddress } from '../../getSubjectFromAddress'
 import { isSubjectInternal } from '../../isSubjectInternal'
 import { getRecipientFromOutput } from '../../outputs'
@@ -10,14 +12,15 @@ import { getSenderAddressFromInputs, getSenderFromTransaction } from '../../tran
 export function getSendingInformation(
     processedTransaction: IProcessedTransaction,
     output: Output,
-    account: IAccountState
+    account: IAccountState,
+    isSelfTransaction: boolean = false
 ): {
     subject: Subject
     direction: ActivityDirection
     isInternal: boolean
     isSelfTransaction: boolean
 } {
-    const { isIncoming, detailedTransactionInputs } = processedTransaction
+    const { isIncoming, detailedTransactionInputs, transactionId } = processedTransaction
 
     const recipient = getRecipientFromOutput(output)
     const sender = detailedTransactionInputs
@@ -27,14 +30,24 @@ export function getSendingInformation(
     const subject = isIncoming ? sender : recipient
     const isInternal = isSubjectInternal(subject)
 
-    let isSelfTransaction = false
-    if (recipient?.type === 'account' && sender?.type === 'account') {
-        isSelfTransaction = recipient.account === sender.account
-    } else if (recipient?.type === 'address' && sender?.type === 'address') {
-        isSelfTransaction = recipient.address === sender.address
+    if (isSelfTransaction === false) {
+        if (recipient?.type === 'account' && sender?.type === 'account') {
+            isSelfTransaction = recipient.account === sender.account
+        } else if (recipient?.type === 'address' && sender?.type === 'address') {
+            isSelfTransaction = recipient.address === sender.address
+        }
     }
 
-    const direction = isIncoming || isSelfTransaction ? ActivityDirection.Incoming : ActivityDirection.Outgoing
+    const isBurningOutput = getIsBurningOutput(output, detailedTransactionInputs, isSelfTransaction, transactionId)
+
+    let direction
+    if (isBurningOutput) {
+        direction = ActivityDirection.Burning
+    } else if (isIncoming || isSelfTransaction) {
+        direction = ActivityDirection.Incoming
+    } else {
+        direction = ActivityDirection.Outgoing
+    }
 
     return {
         subject,
@@ -42,4 +55,19 @@ export function getSendingInformation(
         direction,
         isSelfTransaction,
     }
+}
+
+function getIsBurningOutput(output: Output, inputs: IOutputResponse[], isSelfTransaction: boolean): boolean {
+    if (!isSelfTransaction) {
+        return false
+    }
+
+    const nativeTokens = []
+    for (const { output } of inputs ?? []) {
+        if (output.type !== OUTPUT_TYPE_TREASURY) {
+            nativeTokens.push(...(output.nativeTokens ?? []))
+        }
+    }
+
+    return nativeTokens.some((token) => output.nativeTokens?.includes(token))
 }
