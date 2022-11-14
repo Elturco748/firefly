@@ -20,7 +20,7 @@ export function getSendingInformation(
     isInternal: boolean
     isSelfTransaction: boolean
 } {
-    const { isIncoming, detailedTransactionInputs, transactionId } = processedTransaction
+    const { isIncoming, detailedTransactionInputs } = processedTransaction
 
     const recipient = getRecipientFromOutput(output)
     const sender = detailedTransactionInputs
@@ -38,7 +38,7 @@ export function getSendingInformation(
         }
     }
 
-    const isBurningOutput = getIsBurningOutput(output, detailedTransactionInputs, isSelfTransaction, transactionId)
+    const isBurningOutput = getIsBurningOutput(output, detailedTransactionInputs, isSelfTransaction)
 
     let direction
     if (isBurningOutput) {
