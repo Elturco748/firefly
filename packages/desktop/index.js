@@ -1,4 +1,4 @@
-import App from './App.svelte'
+import App from '../mobile/App.svelte'
 import { Electron } from './lib/electron'
 import { shouldReportError } from './electron/lib/errorHandling'
 
